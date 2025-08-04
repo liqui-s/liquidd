@@ -649,27 +649,27 @@
     <br>
 
     <div class="product-container">
-        <div class="product" data-name="ELFBAR TE 30K " data-image="1.jpg" data-price="$24.500" style="cursor: pointer;">
+        <div class="product" data-name="ELFBAR TE 30K " data-image="1.jpg" data-price="$24.500" data-flavors="Blue Razz Ice,Watermelon Ice,Strawberry Banana,Miami Mint,Peach Ice" style="cursor: pointer;">
             <h2>ELFBAR TE 30K </h2>
             <img src="1.jpg" alt="ELFBAR TE 30K ">
             <p>Precio: $24.500</p>
         </div>
-        <div class="product" data-name="ELFBAR 10K TOUCH " data-image="2.jpg" data-price="$19.500" style="cursor: pointer;">
+        <div class="product" data-name="ELFBAR 10K TOUCH " data-image="2.jpg" data-price="$19.500" data-flavors="Cranberry Grape,Double Mango,Kiwi Passion Fruit Guava,Blueberry Watermelon,Cherry Lemon" style="cursor: pointer;">
             <h2>ELFBAR 10K TOUCH </h2>
             <img src="2.jpg" alt="ELFBAR 10K TOUCH ">
             <p>Precio: $19.500</p>
         </div>
-        <div class="product" data-name="BITCOIN 20K" data-image="4.jpg" data-price="$20.500" style="cursor: pointer;">
+        <div class="product" data-name="BITCOIN 20K" data-image="4.jpg" data-price="$20.500" data-flavors="Triple Berry Ice,Sour Apple,Mango Peach,Pineapple Coconut Ice,Grape Energy" style="cursor: pointer;">
             <h2>BITCOIN 20K</h2>
             <img src="4.jpg" alt="BITCOIN 20K">
             <p>Precio: $20.500</p>
         </div>
-        <div class="product" data-name="LOST ORIÓN 10K " data-image="5.jpg" data-price="$18.500" style="cursor: pointer;">
+        <div class="product" data-name="LOST ORIÓN 10K " data-image="5.jpg" data-price="$18.500" data-flavors="Lush Ice,Banana Cake,Pineapple Lemonade,Strawberry Kiwi,Cool Mint" style="cursor: pointer;">
             <h2>LOST ORIÓN 10K </h2>
             <img src="5.jpg" alt="LOST ORIÓN 10K ">
             <p>Precio: $18.500</p>
         </div>
-        <div class="product" data-name="FUNKY LAND 7K" data-image="3.jpg" data-price="$14.500" style="cursor: pointer;">
+        <div class="product" data-name="FUNKY LAND 7K" data-image="3.jpg" data-price="$14.500" data-flavors="Pink Bomb,Tropical Rainbow Blast,California Cherry,Cantaloupe Apple,Watermelon BG" style="cursor: pointer;">
             <h2>FUNKY LAND 7K</h2>
             <img src="3.jpg" alt="FUNKY LAND 7K">
             <p>Precio: $14.500</p>
@@ -705,6 +705,9 @@
             <img id="modalImage" src="" alt="Product Image" style="width: 100%; max-width: 300px; height: auto; border-radius: 5px; margin-bottom: 15px;">
             <h2 id="modalName">Product Name</h2>
             <p id="modalPrice">Price: $0.00</p>
+            <div id="modalFlavors" style="margin-top: 15px; text-align: left;">
+                <h4>Elige tus sabores (hasta 3):</h4>
+            </div>
             <!-- <p id="modalDescription">Some description here...</p> -->
             <a id="modalWhatsAppLink" href="#" target="_blank" class="button" style="margin-top: 10px; display: inline-block;">Contact on WhatsApp</a>
         </div>
@@ -736,26 +739,70 @@
         const modalName = document.getElementById('modalName');
         const modalImage = document.getElementById('modalImage');
         const modalPrice = document.getElementById('modalPrice');
+        const modalFlavors = document.getElementById('modalFlavors');
         const modalWhatsAppLink = document.getElementById('modalWhatsAppLink');
         const closeButton = document.querySelector('.close-button');
 
         const products = document.querySelectorAll('.product');
+
+        function updateWhatsAppLink(name, price, whatsappNumber) {
+            const checkedFlavors = modalFlavors.querySelectorAll('input[type="checkbox"]:checked');
+            let flavorsMessage = "";
+            if (checkedFlavors.length > 0) {
+                const selectedFlavors = Array.from(checkedFlavors).map(cb => cb.value).join(', ');
+                flavorsMessage = ` Sabores seleccionados: ${selectedFlavors}`;
+            }
+            const message = `Hola, estoy interesado/a en el producto: ${name} - Precio: ${price}.${flavorsMessage}`;
+            modalWhatsAppLink.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+        }
 
         products.forEach(product => {
             product.addEventListener('click', () => {
                 const name = product.dataset.name;
                 const image = product.dataset.image;
                 const price = product.dataset.price;
+                const flavors = product.dataset.flavors.split(',');
                 const whatsappNumber = "+5493544681685"; // Placeholder WhatsApp number
 
                 modalName.textContent = name;
                 modalImage.src = image;
-                modalImage.alt = name; // Set alt text for accessibility
+                modalImage.alt = name;
                 modalPrice.textContent = `Precio: ${price}`;
+
+                // Clear previous flavors and repopulate
+                // The first child is the h4 title, so we clear everything after that.
+                while (modalFlavors.children.length > 1) {
+                    modalFlavors.removeChild(modalFlavors.lastChild);
+                }
+
+                flavors.forEach(flavor => {
+                    const flavorId = `flavor-${flavor.replace(/\s+/g, '-')}`;
+                    const container = document.createElement('div');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = flavorId;
+                    checkbox.value = flavor;
+                    checkbox.style.marginRight = '10px';
+
+                    const label = document.createElement('label');
+                    label.htmlFor = flavorId;
+                    label.textContent = flavor;
+
+                    container.appendChild(checkbox);
+                    container.appendChild(label);
+                    modalFlavors.appendChild(container);
+
+                    checkbox.addEventListener('change', () => {
+                        const checkedCount = modalFlavors.querySelectorAll('input[type="checkbox"]:checked').length;
+                        if (checkedCount > 3) {
+                            alert('Puedes seleccionar hasta 3 sabores.');
+                            checkbox.checked = false;
+                        }
+                        updateWhatsAppLink(name, price, whatsappNumber);
+                    });
+                });
                 
-                const message = `Hola, estoy interesado/a en el producto: ${name} - Precio: ${price}`;
-                modalWhatsAppLink.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-                
+                updateWhatsAppLink(name, price, whatsappNumber);
                 modal.style.display = 'block';
             });
         });
