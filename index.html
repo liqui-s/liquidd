@@ -678,6 +678,32 @@
             border-color: #7a6ad4;
         }
 
+        /* Promo Modal Specific Styles */
+        #promo-question .button {
+            margin: 0 10px;
+        }
+
+        #promo-code-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        #promo-input-container .button {
+            margin-top: 10px;
+        }
+
+        body.dark-mode #promo-code-input {
+            background-color: #333;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
     </style>
 </head>
 <body>
@@ -762,6 +788,25 @@
         </div>
     </div>
 
+    <!-- The Promoter Code Modal -->
+    <div id="promoCodeModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div id="promo-question">
+                <h2 style="margin-bottom: 15px;">¿Tenés un código de promotor?</h2>
+                <button id="promo-yes" class="button">Sí</button>
+                <button id="promo-no" class="button">No</button>
+            </div>
+            <div id="promo-input-container" style="display: none;">
+                <h2 style="margin-bottom: 15px;">Ingresá tu código</h2>
+                <input type="text" id="promo-code-input" placeholder="Código de 4 números y 1 letra">
+                <button id="promo-validate" class="button">Validar</button>
+                <p id="promo-error" style="color: red; display: none; margin-top: 10px;"></p>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         // Dark Mode Toggle
         const darkModeToggle = document.getElementById('darkModeToggle');
@@ -790,9 +835,20 @@
         const modalPrice = document.getElementById('modalPrice');
         const modalFlavors = document.getElementById('modalFlavors');
         const modalWhatsAppLink = document.getElementById('modalWhatsAppLink');
-        const closeButton = document.querySelector('.close-button');
 
+        const promoCodeModal = document.getElementById('promoCodeModal');
+        const promoQuestion = document.getElementById('promo-question');
+        const promoInputContainer = document.getElementById('promo-input-container');
+        const promoYesBtn = document.getElementById('promo-yes');
+        const promoNoBtn = document.getElementById('promo-no');
+        const promoCodeInput = document.getElementById('promo-code-input');
+        const promoValidateBtn = document.getElementById('promo-validate');
+        const promoError = document.getElementById('promo-error');
+
+        const allCloseButtons = document.querySelectorAll('.close-button');
         const products = document.querySelectorAll('.product');
+
+        let currentProductData = null; // To store data of the clicked product
 
         function updateWhatsAppLink(name, price, whatsappNumber) {
             const checkedFlavors = modalFlavors.querySelectorAll('input[type="checkbox"]:checked');
@@ -805,68 +861,107 @@
             modalWhatsAppLink.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
         }
 
+        function showProductModal() {
+            if (!currentProductData) return;
+
+            const { name, image, price, flavors: flavorsStr } = currentProductData;
+            const flavors = flavorsStr ? flavorsStr.split(',') : [];
+            const whatsappNumber = "+5493544681685";
+
+            modalName.textContent = name;
+            modalImage.src = image;
+            modalImage.alt = name;
+            modalPrice.textContent = `Precio: ${price}`;
+
+            while (modalFlavors.children.length > 1) {
+                modalFlavors.removeChild(modalFlavors.lastChild);
+            }
+
+            flavors.forEach(flavor => {
+                const trimmedFlavor = flavor.trim();
+                if (!trimmedFlavor) return;
+
+                const flavorId = `flavor-${trimmedFlavor.replace(/\s+/g, '-')}`;
+                const container = document.createElement('div');
+                container.classList.add('flavor-option');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = flavorId;
+                checkbox.value = trimmedFlavor;
+                checkbox.style.marginRight = '10px';
+
+                const label = document.createElement('label');
+                label.htmlFor = flavorId;
+                label.textContent = trimmedFlavor;
+
+                container.appendChild(checkbox);
+                container.appendChild(label);
+                modalFlavors.appendChild(container);
+
+                checkbox.addEventListener('change', (e) => {
+                    const allCheckboxes = modalFlavors.querySelectorAll('input[type="checkbox"]');
+                    allCheckboxes.forEach(cb => {
+                        if (cb !== e.target) cb.checked = false;
+                    });
+                    updateWhatsAppLink(name, price, whatsappNumber);
+                });
+            });
+
+            updateWhatsAppLink(name, price, whatsappNumber);
+            modal.style.display = 'block';
+        }
+
         products.forEach(product => {
             product.addEventListener('click', () => {
-                const name = product.dataset.name;
-                const image = product.dataset.image;
-                const price = product.dataset.price;
-                const flavors = product.dataset.flavors.split(',');
-                const whatsappNumber = "+5493544681685"; // Placeholder WhatsApp number
-
-                modalName.textContent = name;
-                modalImage.src = image;
-                modalImage.alt = name;
-                modalPrice.textContent = `Precio: ${price}`;
-
-                // Clear previous flavors and repopulate
-                // The first child is the h4 title, so we clear everything after that.
-                while (modalFlavors.children.length > 1) {
-                    modalFlavors.removeChild(modalFlavors.lastChild);
-                }
-
-                flavors.forEach(flavor => {
-                    const flavorId = `flavor-${flavor.replace(/\s+/g, '-')}`;
-                    const container = document.createElement('div');
-                    container.classList.add('flavor-option');
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.id = flavorId;
-                    checkbox.value = flavor;
-                    checkbox.style.marginRight = '10px';
-
-                    const label = document.createElement('label');
-                    label.htmlFor = flavorId;
-                    label.textContent = flavor;
-
-                    container.appendChild(checkbox);
-                    container.appendChild(label);
-                    modalFlavors.appendChild(container);
-
-                    checkbox.addEventListener('change', (e) => {
-                        // Uncheck all other checkboxes
-                        const allCheckboxes = modalFlavors.querySelectorAll('input[type="checkbox"]');
-                        allCheckboxes.forEach(cb => {
-                            if (cb !== e.target) {
-                                cb.checked = false;
-                            }
-                        });
-                        updateWhatsAppLink(name, price, whatsappNumber);
-                    });
-                });
-                
-                updateWhatsAppLink(name, price, whatsappNumber);
-                modal.style.display = 'block';
+                currentProductData = product.dataset;
+                promoError.style.display = 'none';
+                promoCodeInput.value = '';
+                promoInputContainer.style.display = 'none';
+                promoQuestion.style.display = 'block';
+                promoCodeModal.style.display = 'block';
             });
         });
 
-        closeButton.addEventListener('click', () => {
-            modal.style.display = 'none';
+        promoNoBtn.addEventListener('click', () => {
+            promoCodeModal.style.display = 'none';
+            showProductModal();
         });
 
-        // Close modal if user clicks outside of the modal content
-        window.addEventListener('click', (event) => {
-            if (event.target === modal) {
+        promoYesBtn.addEventListener('click', () => {
+            promoQuestion.style.display = 'none';
+            promoInputContainer.style.display = 'block';
+        });
+
+        function validatePromoCode(code) {
+            if (typeof code !== 'string' || code.length !== 5) return false;
+            const digits = (code.match(/\d/g) || []).length;
+            const letters = (code.match(/[a-zA-Z]/g) || []).length;
+            return digits === 4 && letters === 1;
+        }
+
+        promoValidateBtn.addEventListener('click', () => {
+            const code = promoCodeInput.value.trim();
+            if (validatePromoCode(code)) {
+                promoError.style.display = 'none';
+                promoCodeModal.style.display = 'none';
+                showProductModal();
+            } else {
+                promoError.textContent = 'Código inválido. Debe tener 4 números y 1 letra.';
+                promoError.style.display = 'block';
+            }
+        });
+
+        allCloseButtons.forEach(button => {
+            button.addEventListener('click', () => {
                 modal.style.display = 'none';
+                promoCodeModal.style.display = 'none';
+            });
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === modal || event.target === promoCodeModal) {
+                modal.style.display = 'none';
+                promoCodeModal.style.display = 'none';
             }
         });
 
