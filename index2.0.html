@@ -870,7 +870,7 @@
                 promoMessage = ` (Código de promotor usado: ${currentPromoCode})`;
             }
 
-            const message = `Hola, estoy interesado/a en el producto: ${name} - Precio: ${price}.${flavorsMessage}${promoMessage}`;
+            const message = `Hola, estoy interesado/a en el producto: ${name} - Precio: ${price}. ${flavorsMessage}. ${promoMessage}`;
             modalWhatsAppLink.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
         }
 
